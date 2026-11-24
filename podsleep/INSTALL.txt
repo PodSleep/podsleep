@@ -1,0 +1,36 @@
+PodSleep — install
+==================
+
+PodSleep is a new set of screens for Free Sleep on an Eight Sleep Pod. It is not
+affiliated with or endorsed by Eight Sleep. Use at your own risk (see LICENSE.md).
+
+Before you start
+- Free Sleep is installed and working on your Pod (http://<pod-ip>:3000 opens).
+- SSH to the Pod works on port 8822 (Free Sleep's scripts/setup_ssh.sh).
+  Test it:  ssh -p 8822 root@<pod-ip> echo ok
+- Your computer is on the same network as the Pod.
+
+Mac or Linux
+1. Open Terminal in this folder.
+2. Run:  bash install-from-computer.sh
+3. Enter your Pod's IP address when asked. It takes under a minute.
+
+Windows 10 or 11
+1. Open PowerShell in this folder.
+2. Run:  powershell -ExecutionPolicy Bypass -File .\install-from-windows.ps1
+3. Enter your Pod's IP address when asked.
+
+Then open http://<pod-ip>:3000 on your phone. To add it to your home screen:
+iPhone: Share > Add to Home Screen. Android (Chrome): menu > Add to Home screen.
+
+After a Free Sleep update
+Free Sleep updates replace PodSleep's files. Run the install again.
+
+Removing PodSleep
+Mac/Linux:  bash install-from-computer.sh uninstall
+Windows:    powershell -ExecutionPolicy Bypass -File .\install-from-windows.ps1 uninstall
+This puts Free Sleep's own screens back. Your schedules and settings are untouched.
+
+If something goes wrong
+The installer backs up Free Sleep's screens to /home/dac/podsleep-backup on the Pod,
+and if Free Sleep doesn't restart after installing, it puts Free Sleep back by itself.

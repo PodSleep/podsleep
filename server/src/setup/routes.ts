@@ -17,12 +17,15 @@ import presence from '../routes/metrics/presence.js';
 import logs from '../routes/logs/logs.js';
 import serverStatus from '../routes/serverStatus/serverStatus.js';
 import logger from '../logger.js';
+import boost, { resumeBoost } from '../routes/boost/boost.js'; // PodSleep
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export default function (app: Express) {
   logger.debug('Registering routes...');
+  app.use('/api/', boost); // PodSleep
+  resumeBoost(); // PodSleep
   app.use('/api/', alarm);
   app.use('/api/', deviceStatus);
   app.use('/api/', execute);

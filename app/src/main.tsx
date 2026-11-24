@@ -1,105 +1,81 @@
-import { initSentry } from './sentry.tsx';
-initSentry();
-import * as Sentry from '@sentry/react';
-
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import './ps/styles.css';
+import { StrictMode, lazy, Suspense, type ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { CssBaseline } from '@mui/material';
+import { BrowserRouter, MemoryRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { StrictMode } from 'react';
-import { ThemeProvider } from '@mui/material/styles';
-import { theme } from './theme';
+import Home from './ps/Home';
+import { useBoostNotice } from './ps/data';
+import { BottomNav, Loading, Toast } from './ps/ui';
+import { useApp } from './ps/store';
+import { useSchedules } from './ps/data';
+import { toMin, todayKey, after } from './ps/lib';
 
-import ControlTempPage from './pages/ControlTempPage/ControlTempPage';
-import SettingsPage from './pages/SettingsPage/SettingsPage';
-import Layout from './components/Layout';
-import { AppStoreProvider } from '@state/appStore.tsx';
-import SchedulePage from './pages/SchedulePage/SchedulePage.tsx';
-import ErrorBoundary from './components/ErrorBoundary.tsx';
-import { GlobalStyles } from '@mui/material';
-import SleepPage from './pages/DataPage/SleepPage/SleepPage.tsx';
-import DataPage from './pages/DataPage/DataPage.tsx';
-import VitalsPage from './pages/DataPage/VitalsPage/VitalsPage.tsx';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterMoment } from '@mui/x-date-pickers/AdapterMoment';
-import LogsPage from './pages/DataPage/LogsPage/LogsPage.tsx';
-import StatusPage from './pages/StatusPage/StatusPage.tsx';
+const Schedule = lazy(() => import('./ps/Schedule'));
+const Sleep = lazy(() => import('./ps/Sleep'));
+const Settings = lazy(() => import('./ps/Settings'));
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 3,
-    },
-  },
-});
+const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 2, refetchOnWindowFocus: true } } });
 
-const SentryRoutes = Sentry.withSentryReactRouterV7Routing(Routes);
+/** Night mode: dims and warms the screen between the chosen times. */
+const useNightMode = () => {
+  const night = useApp((s) => s.night);
+  const side = useApp((s) => s.side);
+  const { data: schedules } = useSchedules();
+  if (!night.enabled) return false;
+  const today = schedules?.[side]?.[todayKey()];
+  const start = night.start === 'bed' && today ? toMin(today.power.on) : toMin(night.start === 'bed' ? '21:00' : night.start);
+  const end = night.end === 'alarm' && today ? toMin(today.alarm.time) : toMin(night.end === 'alarm' ? '07:00' : night.end);
+  const d = new Date();
+  const nowMin = d.getHours() * 60 + d.getMinutes();
+  return after(start, nowMin) < after(start, end);
+};
 
-
-const App = () => {
+const Layout = () => {
+  useBoostNotice();
+  const night = useNightMode();
   return (
-
-    <QueryClientProvider client={ queryClient }>
-      <ThemeProvider theme={ theme }>
-        <LocalizationProvider dateAdapter={ AdapterMoment }>
-
-          <AppStoreProvider>
-            <CssBaseline/>
-            <GlobalStyles
-              styles={ {
-                'html, body': {
-                  overscrollBehavior: 'none', // Prevent rubber-banding
-                },
-              } }
-            />
-            <BrowserRouter basename="/">
-              <SentryRoutes>
-                <Route path="/" element={ <Layout/> }>
-                  <Route index element={ <ControlTempPage/> }/>
-                  <Route path="temperature" element={ <ControlTempPage/> }/>
-                  <Route path="left" element={ <ControlTempPage/> }/>
-                  <Route path="right" element={ <ControlTempPage/> }/>
-                  <Route path="status" element={ <StatusPage /> } />
-
-                  <Route path="data" element={ <DataPage /> }>
-                    <Route path="sleep" element={ <SleepPage/> }/>
-                    <Route path="logs" element={ <LogsPage/> }/>
-                    <Route path="vitals" element={ <VitalsPage/> }/>
-                  </Route>
-
-                  <Route path="settings" element={ <SettingsPage/> }/>
-                  <Route path="schedules" element={ <SchedulePage/> }/>
-                </Route>
-              </SentryRoutes>
-            </BrowserRouter>
-          </AppStoreProvider>
-        </LocalizationProvider>
-      </ThemeProvider>
-    </QueryClientProvider>
+    <div className={ `app${night ? ' night' : ''}` }>
+      <Suspense fallback={ <div className="page"><Loading/></div> }>
+        <Outlet/>
+      </Suspense>
+      <Toast/>
+      <BottomNav/>
+    </div>
   );
 };
 
+const isPreview = import.meta.env.VITE_ENV === 'artifact';
+const Router = ({ children }: { children: ReactNode }) => isPreview
+  ? <MemoryRouter>{ children }</MemoryRouter>
+  : <BrowserRouter basename="/">{ children }</BrowserRouter>;
+
+const App = (): ReactNode => (
+  <QueryClientProvider client={ queryClient }>
+    <Router>
+      <Routes>
+        <Route path="/" element={ <Layout/> }>
+          <Route index element={ <Home/> }/>
+          <Route path="schedule" element={ <Schedule/> }/>
+          <Route path="sleep" element={ <Sleep/> }/>
+          <Route path="settings" element={ <Settings/> }/>
+          <Route path="*" element={ <Navigate to="/" replace/> }/>
+        </Route>
+      </Routes>
+    </Router>
+  </QueryClientProvider>
+);
 
 async function enableMocking() {
-  if (import.meta.env.VITE_ENV !== 'demo') {
+  if (isPreview) {
+    const { startInPageMocks } = await import('./mocks/inPage');
+    await startInPageMocks();
     return;
   }
-  // eslint-disable-next-line no-console
-  console.info('Enabling MSW worker!');
-
+  if (import.meta.env.VITE_ENV !== 'demo') return;
   const { worker } = await import('./mocks/browser');
-
-  // `worker.start()` returns a Promise that resolves
-  // once the Service Worker is up and ready to intercept requests.
   return worker.start();
 }
 
 enableMocking().then(() => {
-  createRoot(document.getElementById('root')!).render(
-    <StrictMode>
-      <ErrorBoundary componentName='App'>
-        <App />
-      </ErrorBoundary>
-    </StrictMode>
-  );
+  createRoot(document.getElementById('root')!).render(<StrictMode><App/></StrictMode>);
 });

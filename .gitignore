@@ -22,3 +22,8 @@ app/dist/
 /server/free-sleep-data/*
 
 !.gitkeep
+app/dist-preview/
+
+# PodSleep build output
+podsleep/release/
+app/dist-preview/

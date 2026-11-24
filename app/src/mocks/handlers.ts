@@ -44,7 +44,33 @@ const toFilters = (request: Request): Filters => {
 
 const notFound = (message: string) => HttpResponse.json({ message }, { status: 404 });
 
+// PodSleep: demo version of the Pod's boost route.
+let demoBoost: any = null;
+let demoBoostTimer: ReturnType<typeof setTimeout> | undefined;
+const endDemoBoost = (restore: boolean) => {
+  clearTimeout(demoBoostTimer);
+  if (demoBoost && restore) updateDeviceStatus(demoBoost.previous);
+  demoBoost = null;
+};
+
 export const handlers = [
+  http.get('/api/boost', async () => HttpResponse.json(demoBoost)),
+  http.post('/api/boost', async ({ request }) => {
+    const { kind, sides, minutes = 15 } = (await request.json()) as { kind: 'cold' | 'heat'; sides: ('left' | 'right')[]; minutes?: number };
+    const status = getDeviceStatus() as any;
+    const previous = { ...(demoBoost?.previous ?? {}) };
+    sides.forEach((s) => { previous[s] ??= { targetTemperatureF: status[s].targetTemperatureF, isOn: status[s].isOn }; });
+    const target = kind === 'cold' ? 55 : 110;
+    updateDeviceStatus(Object.fromEntries(sides.map((s) => [s, { targetTemperatureF: target, isOn: true }])) as any);
+    demoBoost = { kind, sides: Array.from(new Set([...(demoBoost?.sides ?? []), ...sides])), until: Date.now() + minutes * 60_000, previous };
+    clearTimeout(demoBoostTimer);
+    demoBoostTimer = setTimeout(() => endDemoBoost(true), minutes * 60_000);
+    return HttpResponse.json(demoBoost);
+  }),
+  http.delete('/api/boost', async ({ request }) => {
+    endDemoBoost(new URL(request.url).searchParams.get('restore') !== 'false');
+    return HttpResponse.json(null);
+  }),
   http.get('/api/services', async () => {
     await delay(120);
     return HttpResponse.json(deepClone(getServices()));
