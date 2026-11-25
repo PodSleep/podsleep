@@ -79,6 +79,8 @@ Best effort. Open an issue with your Pod model, Free Sleep version and what the 
 
 ## Credits and licence
 
-Built on [Free Sleep](https://github.com/throwaway31265/free-sleep) by throwaway31265 and contributors, under the MIT licence; PodSleep's changes are released under the same licence. See [LICENSE.md](LICENSE.md) and [NOTICE.md](NOTICE.md). Free Sleep's original README is kept at [docs/FREE_SLEEP_README.md](docs/FREE_SLEEP_README.md).
+Built on [Free Sleep](https://github.com/throwaway31265/free-sleep) by throwaway31265 and contributors, under the MIT licence; PodSleep's changes are released under the same licence.
+
+PodSleep's look was inspired by the design of [Eight+](https://github.com/nexon3223/eight-plus) by u/Extension-Albatross9. No Eight+ code is used. If you run Home Assistant, Eight+ does a lot more (Autopilot, sleep reports, iPhone widgets); PodSleep is for people who want Free Sleep on their phone without Home Assistant. See [LICENSE.md](LICENSE.md) and [NOTICE.md](NOTICE.md). Free Sleep's original README is kept at [docs/FREE_SLEEP_README.md](docs/FREE_SLEEP_README.md).
 
 Eight Sleep and Pod are trademarks of Eight Sleep, Inc., used here only to say what this works with.
