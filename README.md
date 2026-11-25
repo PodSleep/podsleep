@@ -2,7 +2,7 @@
 
 A new set of screens for [Free Sleep](https://github.com/throwaway31265/free-sleep), the open-source software that runs an Eight Sleep Pod on your own network.
 
-**[Try the demo](https://podsleep.github.io/podsleep/)** on your phone. It uses sample data and isn't connected to a Pod.
+**[Try the demo](https://podsleep.github.io/podsleep/)** on your phone. It uses sample data and isn't connected to a Pod. The demo counts visits with [GoatCounter](https://www.goatcounter.com) (no cookies, no personal data); the app on your Pod doesn't.
 
 ![PodSleep screens: Home, Cold Shot, Schedule, Sleep, Settings](docs/podsleep/screens.jpg)
 

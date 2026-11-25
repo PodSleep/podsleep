@@ -1,7 +1,7 @@
 import './ps/styles.css';
-import { StrictMode, lazy, Suspense, type ReactNode } from 'react';
+import { StrictMode, lazy, Suspense, useEffect, type ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter, MemoryRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, MemoryRouter, Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Home from './ps/Home';
 import { useBoostNotice } from './ps/data';
@@ -30,8 +30,27 @@ const useNightMode = () => {
   return after(start, nowMin) < after(start, end);
 };
 
+// Public demo only: count visits and which tabs people open, with GoatCounter (no cookies,
+// no personal data). Never loaded in the app that runs on a Pod.
+const useDemoCounter = () => {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    if (import.meta.env.VITE_ENV !== 'artifact' || location.hostname !== 'podsleep.github.io') return;
+    const gc = (window as unknown as { goatcounter?: { count?: (o: object) => void } }).goatcounter;
+    if (!document.getElementById('gc-script')) {
+      const s = document.createElement('script');
+      s.id = 'gc-script'; s.async = true; s.src = 'https://gc.zgo.at/count.js';
+      s.dataset.goatcounter = 'https://podsleep.goatcounter.com/count';
+      document.head.appendChild(s);
+      return; // the script counts this first visit itself
+    }
+    gc?.count?.({ path: `demo-tab${pathname === '/' ? '/home' : pathname}`, title: 'Demo tab', event: true });
+  }, [pathname]);
+};
+
 const Layout = () => {
   useBoostNotice();
+  useDemoCounter();
   const night = useNightMode();
   return (
     <div className={ `app${night ? ' night' : ''}` }>
