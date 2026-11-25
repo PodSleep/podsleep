@@ -241,7 +241,7 @@ export default function Settings() {
   if (page === 'about') return (
     <Sub title="About" back="Settings" onBack={ back }>
       <div className="list">
-        { [['PodSleep', '1.0'], ['Free Sleep', ds.freeSleep.version], ['Hub', ds.hubVersion], ['Cover', ds.coverVersion], ['Wi-Fi signal', `${ds.wifiStrength}%`]].map(([k, v]) => (
+        { [['PodSleep', '1.0.1'], ['Free Sleep', ds.freeSleep.version], ['Hub', ds.hubVersion], ['Cover', ds.coverVersion], ['Wi-Fi signal', `${ds.wifiStrength}%`]].map(([k, v]) => (
           <div key={ k } className="row" style={ { minHeight: 52, padding: '10px 16px' } }><span className="grow" style={ { fontSize: 15, color: 'var(--text-2)' } }>{ k }</span><span>{ v }</span></div>
         )) }
       </div>
@@ -263,7 +263,7 @@ export default function Settings() {
     ['System', [
       <ToggleRow key="s" icon="pulse" color="green" title="Sleep tracking" on={ !!services?.biometrics?.enabled } onChange={ (v) => void setTracking(v) }/>,
       <ToggleRow key="r" icon="restart" color="grey" title="Restart daily" on={ settings.rebootDaily } onChange={ (v) => void save.settings({ rebootDaily: v }) }/>,
-      <Row key="ab" icon="info" color="grey" title="About" value="PodSleep 1.0" onClick={ () => setPage('about') }/>,
+      <Row key="ab" icon="info" color="grey" title="About" value="PodSleep 1.0.1" onClick={ () => setPage('about') }/>,
     ]],
   ];
 
