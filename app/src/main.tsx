@@ -35,6 +35,11 @@ const Layout = () => {
   const night = useNightMode();
   return (
     <div className={ `app${night ? ' night' : ''}` }>
+      { import.meta.env.VITE_ENV === 'artifact' && (
+        <div className="demo-bar" role="note">
+          Demo with sample data, not connected to a Pod · <a href="https://github.com/PodSleep/podsleep">Get PodSleep</a>
+        </div>
+      ) }
       <Suspense fallback={ <div className="page"><Loading/></div> }>
         <Outlet/>
       </Suspense>

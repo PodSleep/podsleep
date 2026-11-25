@@ -102,6 +102,14 @@ export const handlers = [
     return HttpResponse.json(deepClone(updated));
   }),
   http.get('/api/deviceStatus', async () => {
+    // Demo: each side drifts towards its target, so colours and Cold Shot / Heat Boost visibly move.
+    const ds = getDeviceStatus();
+    for (const s of ['left', 'right'] as const) {
+      const d = ds[s];
+      if (!d.isOn) continue;
+      const gap = d.targetTemperatureF - d.currentTemperatureF;
+      if (Math.abs(gap) >= 0.5) updateDeviceStatus({ [s]: { currentTemperatureF: Math.round((d.currentTemperatureF + Math.sign(gap) * Math.min(Math.abs(gap), 4)) * 10) / 10 } } as never);
+    }
     await delay(120);
     return HttpResponse.json(deepClone(getDeviceStatus()));
   }),

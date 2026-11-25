@@ -2,6 +2,8 @@
 
 A new set of screens for [Free Sleep](https://github.com/throwaway31265/free-sleep), the open-source software that runs an Eight Sleep Pod on your own network.
 
+**[Try the demo](https://podsleep.github.io/podsleep/)** on your phone. It uses sample data and isn't connected to a Pod.
+
 ![PodSleep screens: Home, Cold Shot, Schedule, Sleep, Settings](docs/podsleep/screens.jpg)
 
 > **Not affiliated with or endorsed by Eight Sleep.** Like Free Sleep itself, using it may void your Pod's warranty. Use at your own risk; see [LICENSE.md](LICENSE.md).

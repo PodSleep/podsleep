@@ -325,7 +325,7 @@ const createDeviceStatus = (): DeviceStatus => ({
     isAlarmVibrating: false,
   },
   waterLevel: 'true',
-  isPriming: true,
+  isPriming: false,
   settings: {
     v: 12,
     gainLeft: 3,

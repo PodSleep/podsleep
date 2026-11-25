@@ -80,7 +80,7 @@ const Dial = ({ value, frac, colourF, label, onDrag, onDrop, onKey }: {
         <circle cx={ kx } cy={ ky } r={ dragging ? 9 : 6.5 } fill="#fff" style={ { filter: `drop-shadow(0 0 6px ${tempColor(colourF)})`, transition: 'r .15s', pointerEvents: 'none' } }/>
       </svg>
       <div aria-live="polite" style={ { position: 'absolute', left: 0, right: 0, top: '30%', textAlign: 'center', pointerEvents: 'none' } }>
-        <div className="num" style={ { fontSize: 'clamp(30px, 10vw, 38px)', fontWeight: 600, letterSpacing: -1, lineHeight: 1 } }>{ value }</div>
+        <div className="num" style={ { fontSize: value.length > 4 ? 'clamp(24px, 8vw, 30px)' : 'clamp(30px, 10vw, 38px)', fontWeight: 600, letterSpacing: -1, lineHeight: 1 } }>{ value }</div>
         <div style={ { marginTop: 6, fontSize: 11, color: 'var(--muted)' } }>Target</div>
       </div>
     </div>
