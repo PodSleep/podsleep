@@ -36,7 +36,11 @@ const clone = <T>(value: T): T => {
 const toIso = (date: Date) => date.toISOString();
 
 const createSleepRecord = (id: number, side: Side, nightsAgo: number, durationHours: number, exits: number): SleepRecord => {
-  const start = new Date(now.getTime() - nightsAgo * 24 * HOURS_TO_MS + (side === 'left' ? -30 * MINUTES_TO_MS : 0));
+  const lastNight = new Date(now);
+  lastNight.setHours(22, 30, 0, 0);
+  if (lastNight > now) lastNight.setDate(lastNight.getDate() - 1);
+  const wobble = (((nightsAgo * 37) % 50) - 25) * MINUTES_TO_MS;
+  const start = new Date(lastNight.getTime() - (nightsAgo - 1) * 24 * HOURS_TO_MS + wobble + (side === 'left' ? -30 * MINUTES_TO_MS : 0));
   const end = new Date(start.getTime() + durationHours * HOURS_TO_MS);
   const presentInterval: [string, string] = [toIso(start), toIso(end)];
   const absenceStart = new Date(start.getTime() + (durationHours / 2) * HOURS_TO_MS);
@@ -467,20 +471,41 @@ const createLogs = (): LogStore => ({
   ],
 });
 
-let sleepRecords = [
-  createSleepRecord(5, 'left', 3, 7.1, 0),
-  createSleepRecord(6, 'right', 3, 7.0, 0),
+let sleepRecords = Array.from({ length: 14 }, (_, k) => (['left', 'right'] as Side[]).map((side, j) =>
+  createSleepRecord(k * 2 + j + 1, side, k + 1, 6.6 + ((k * 3 + j * 5) % 9) / 6, (k + j) % 3))).flat();
 
-
-  createSleepRecord(3, 'left', 2, 7.8, 1),
-  createSleepRecord(4, 'right', 2, 7.4, 2),
-
-  createSleepRecord(1, 'left', 1, 7.5, 1),
-  createSleepRecord(2, 'right', 1, 7.2, 0),
-];
-
-const movementRecords = createMovementRecords();
-const vitalsRecords = createVitalsRecords();
+const wiggle = (i: number, seed: number) => Math.sin(i * 12.9898 + seed * 78.233) * 0.5 + Math.sin(i * 0.37 + seed) * 0.5;
+const nightVitals = (): VitalsRecord[] => {
+  const out: VitalsRecord[] = [];
+  sleepRecords.forEach((r, n) => {
+    const a = Date.parse(r.entered_bed_at); const b = Date.parse(r.left_bed_at);
+    for (let t = a, i = 0; t <= b; t += 4 * MINUTES_TO_MS, i++) {
+      const f = (t - a) / (b - a); const dip = Math.sin(Math.PI * f);
+      out.push({ side: r.side, timestamp: Math.floor(t / 1000),
+        heart_rate: Math.round(63 - 9 * dip + 2.5 * wiggle(i, n)),
+        hrv: Math.round(52 + 26 * dip + 6 * wiggle(i, n + 3)),
+        breathing_rate: Math.round((14.5 - 2.5 * dip + 0.8 * wiggle(i, n + 7)) * 10) / 10 } as VitalsRecord);
+    }
+  });
+  // A few readings in the last ten minutes so "Live now" has something to show.
+  for (let m = 9; m >= 0; m -= 3) out.push({ side: 'left', timestamp: Math.floor((now.getTime() - m * MINUTES_TO_MS) / 1000), heart_rate: 58, hrv: 74, breathing_rate: 12.5 } as VitalsRecord);
+  return out;
+};
+const nightMovement = (): MovementRecord[] => {
+  const out: MovementRecord[] = [];
+  let id = 1;
+  sleepRecords.forEach((r, n) => {
+    const a = Date.parse(r.entered_bed_at); const b = Date.parse(r.left_bed_at);
+    for (let t = a, i = 0; t <= b; t += 5 * MINUTES_TO_MS, i++) {
+      const restless = (i + n) % 23 === 0 ? 900 : (i + n) % 7 === 0 ? 250 : 0;
+      out.push({ id: id++, side: r.side, timestamp: new Date(t).toISOString(), total_movement: Math.round(60 + 40 * Math.abs(wiggle(i, n)) + restless) } as unknown as MovementRecord);
+    }
+  });
+  return out;
+};
+void createMovementRecords; void createVitalsRecords;
+const movementRecords = nightMovement();
+const vitalsRecords = nightVitals();
 let schedules = createSchedules();
 let settings = createSettings();
 let services = createServices();

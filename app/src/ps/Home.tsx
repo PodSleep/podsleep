@@ -189,7 +189,7 @@ export default function Home() {
     const tint = kind === 'away' ? '#b7a6ff' : tempColor(tf);
     const soft = kind === 'away' ? 'var(--muted)' : tempSoft(tf);
     const sub = kind === 'away' ? (away ? 'On' : 'Off')
-      : active ? `${clock} · Stop` : `${fmtTemp(cold ? MIN_F : MAX_F, unit)} · 15 min`;
+      : active ? `${clock} · Stop` : '15 min';
     return (
       <button key={ kind } type="button" aria-pressed={ active }
               onClick={ kind === 'away' ? toggleAway : () => startBoost(kind) }

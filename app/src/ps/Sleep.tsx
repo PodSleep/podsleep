@@ -50,6 +50,30 @@ const useNights = (side: 'left' | 'right', start: number, end: number) => {
   return nights;
 };
 
+// Chart smoothing: average each reading with its neighbours within 10 minutes, thin to at most
+// 90 points, then draw a smooth curve through them. Averages and ranges still use the raw readings.
+const smoothSeries = (pts: { t: number; v: number }[]) => {
+  const W = 10 * 60 * 1000;
+  const avg = pts.map((p) => {
+    let sum = 0; let n = 0;
+    for (const q of pts) if (Math.abs(q.t - p.t) <= W) { sum += q.v; n++; }
+    return { t: p.t, v: sum / n };
+  });
+  if (avg.length <= 90) return avg;
+  const step = avg.length / 90;
+  return Array.from({ length: 90 }, (_, i) => avg[Math.min(avg.length - 1, Math.round(i * step))]).concat(avg[avg.length - 1]);
+};
+const curvePath = (xy: [number, number][]) => {
+  const f = (n: number) => n.toFixed(1);
+  if (xy.length < 3) return xy.map(([x, y], i) => `${i ? 'L' : 'M'} ${f(x)} ${f(y)}`).join(' ');
+  let d = `M ${f(xy[0][0])} ${f(xy[0][1])}`;
+  for (let i = 1; i < xy.length; i++) {
+    const p0 = xy[i - 2] || xy[i - 1]; const p1 = xy[i - 1]; const p2 = xy[i]; const p3 = xy[i + 1] || p2;
+    d += ` C ${f(p1[0] + (p2[0] - p0[0]) / 6)} ${f(p1[1] + (p2[1] - p0[1]) / 6)} ${f(p2[0] - (p3[0] - p1[0]) / 6)} ${f(p2[1] - (p3[1] - p1[1]) / 6)} ${f(p2[0])} ${f(p2[1])}`;
+  }
+  return d;
+};
+
 const LiveNow = ({ side }: { side: 'left' | 'right' }) => {
   const since = useMemo(() => iso(Date.now() - 10 * 60 * 1000), []);
   const { data } = useVitalsRecords({ side, startTime: since });
@@ -104,7 +128,8 @@ const NightView = ({ side, offset, setMax }: { side: 'left' | 'right'; offset: n
   const pad = (hi - lo) * .15 || 1;
   const X = (t: number) => ((t - start) / span) * 314;
   const Y = (v: number) => 4 + (1 - (v - (lo - pad)) / ((hi + pad) - (lo - pad))) * 104;
-  const line = series.map((p, i) => `${i ? 'L' : 'M'} ${X(p.t).toFixed(1)} ${Y(p.v).toFixed(1)}`).join(' ');
+  const smooth = smoothSeries(series);
+  const line = curvePath(smooth.map((p) => [X(p.t), Math.min(108, Math.max(2, Y(p.v)))]));
   const avg = values.length ? values.reduce((a, b) => a + b, 0) / values.length : 0;
   const m = MEASURES[measure];
 
